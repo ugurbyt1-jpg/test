@@ -1,0 +1,44 @@
+name: Nuitka EXE Build
+
+on:
+  push:
+    branches: [ "main" ] # Ana kola her yükleme yapıldığında çalışır
+  workflow_dispatch:      # Manuel olarak başlatma düğmesi ekler
+
+jobs:
+  build:
+    runs-on: windows-latest # Windows 2022 sunucusu kullanır
+
+    steps:
+      - name: Kodları Çek
+        uses: actions/checkout@v4
+
+      - name: Python Kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10' # İstediğiniz sürümü seçebilirsiniz
+          cache: 'pip'
+
+      - name: Bağımlılıkları Yükle
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install nuitka zstandard
+
+      - name: Nuitka ile EXE Oluştur
+        # --onefile: Tek dosya yapar
+        # --standalone: Bağımsız çalışır hale getirir
+        # --windows-disable-console: Konsol açılmasın istiyorsanız bunu ekleyin
+        run: |
+          python -m nuitka `
+            --standalone `
+            --onefile `
+            --assume-yes-for-downloads `
+            --output-dir=build_output `
+            main.py
+
+      - name: EXE Dosyasını Paylaş
+        uses: actions/upload-artifact@v4
+        with:
+          name: Derlenmis_Program
+          path: build_output/*.exe
